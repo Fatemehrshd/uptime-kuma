@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiet Hours API Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #5cdd8b;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #5cdd8b;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #4bc475;
+        }
+        button.secondary {
+            background-color: #6c757d;
+        }
+        button.secondary:hover {
+            background-color: #5a6268;
+        }
+        button.danger {
+            background-color: #dc3545;
+        }
+        button.danger:hover {
+            background-color: #c82333;
+        }
+        .output {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .timezone {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌙 Quiet Hours API Tester</h1>
+        
+        <div class="info">
+            <strong>Instructions:</strong> This tool helps you test the Quiet Hours feature without using the Vue component.
+            Make sure Uptime Kuma is running on <strong>http://localhost:3001</strong> and you're logged in.
+        </div>
+
+        <div class="timezone">
+            <strong>Your Detected Timezone:</strong> <span id="detectedTimezone"></span>
+        </div>
+
+        <h2>1. Add Quiet Hours Window</h2>
+        <div class="form-group">
+            <label>Monitor ID:</label>
+            <input type="number" id="monitorId" value="1" min="1">
+        </div>
+        <div class="form-group">
+            <label>Start Time (HH:mm):</label>
+            <input type="time" id="startTime" value="22:00">
+        </div>
+        <div class="form-group">
+            <label>End Time (HH:mm):</label>
+            <input type="time" id="endTime" value="08:00">
+        </div>
+        <div class="form-group">
+            <label>Weekdays (leave empty for all days):</label>
+            <div>
+                <label><input type="checkbox" value="1"> Monday</label>
+                <label><input type="checkbox" value="2"> Tuesday</label>
+                <label><input type="checkbox" value="3"> Wednesday</label>
+                <label><input type="checkbox" value="4"> Thursday</label>
+                <label><input type="checkbox" value="5"> Friday</label>
+                <label><input type="checkbox" value="6"> Saturday</label>
+                <label><input type="checkbox" value="7"> Sunday</label>
+            </div>
+        </div>
+        <button onclick="addQuietHours()">Add Quiet Hours</button>
+        <button class="secondary" onclick="addCurrentTimeWindow()">Add Window Around Current Time (1 hour)</button>
+
+        <h2>2. View Quiet Hours</h2>
+        <div class="form-group">
+            <label>Monitor ID:</label>
+            <input type="number" id="viewMonitorId" value="1" min="1">
+        </div>
+        <button onclick="getQuietHours()">Get Quiet Hours</button>
+
+        <h2>3. Quick Actions</h2>
+        <button onclick="testInsideWindow()">Test: Add Window That Includes NOW</button>
+        <button onclick="testOutsideWindow()">Test: Add Window That Excludes NOW</button>
+        <button class="danger" onclick="clearOutput()">Clear Output</button>
+
+        <h2>Output</h2>
+        <div class="output" id="output">Waiting for actions...</div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let socket;
+
+        // Connect to socket
+        window.addEventListener('load', () => {
+            socket = io();
+            
+            socket.on('connect', () => {
+                addOutput('✅ Connected to Uptime Kuma', 'success');
+            });
+
+            socket.on('disconnect', () => {
+                addOutput('❌ Disconnected from Uptime Kuma', 'error');
+            });
+
+            // Display detected timezone
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            document.getElementById('detectedTimezone').textContent = tz;
+        });
+
+        function addOutput(message, type = 'info') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : '';
+            output.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput() {
+            document.getElementById('output').innerHTML = 'Output cleared.\n';
+        }
+
+        function addQuietHours() {
+            const monitorId = parseInt(document.getElementById('monitorId').value);
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+            const weekdays = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+            const data = {
+                monitorId,
+                startTime,
+                endTime,
+                timezone,
+                weekdays,
+                active: true
+            };
+
+            addOutput(`Adding quiet hours: ${JSON.stringify(data, null, 2)}`);
+
+            socket.emit('addQuietHours', data, (response) => {
+                if (response.ok) {
+                    addOutput(`✅ Success: ${response.msg} (ID: ${response.quietHoursID})`, 'success');
+                } else {
+                    addOutput(`❌ Error: ${response.msg}`, 'error');
+                }
+            });
+        }
+
+        function getQuietHours() {
+            const monitorId = parseInt(document.getElementById('viewMonitorId').value);
+            
+            addOutput(`Fetching quiet hours for monitor ${monitorId}...`);
+
+            socket.emit('getMonitorQuietHours', monitorId, (response) => {
+                if (response.ok) {
+                    addOutput(`✅ Quiet Hours List:\n${JSON.stringify(response.quietHoursList, null, 2)}`, 'success');
+                    
+                    if (response.quietHoursList.length === 0) {
+                        addOutput('No quiet hours configured for this monitor.');
+                    }
+                } else {
+                    addOutput(`❌ Error: ${response.msg}`, 'error');
+                }
+            });
+        }
+
+        function addCurrentTimeWindow() {
+            const monitorId = parseInt(document.getElementById('monitorId').value);
+            const now = new Date();
+            
+            // Create a 1-hour window around current time (30 min before, 30 min after)
+            const start = new Date(now.getTime() - 30 * 60000);
+            const end = new Date(now.getTime() + 30 * 60000);
+            
+            const startTime = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`;
+            const endTime = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+            const data = {
+                monitorId,
+                startTime,
+                endTime,
+                timezone,
+                weekdays: [],
+                active: true
+            };
+
+            addOutput(`Adding window around current time: ${startTime} - ${endTime}`);
+
+            socket.emit('addQuietHours', data, (response) => {
+                if (response.ok) {
+                    addOutput(`✅ Success: Window added that INCLUDES current time`, 'success');
+                    addOutput(`This means notifications should be SUPPRESSED right now!`, 'success');
+                } else {
+                    addOutput(`❌ Error: ${response.msg}`, 'error');
+                }
+            });
+        }
+
+        function testInsideWindow() {
+            const monitorId = parseInt(document.getElementById('monitorId').value);
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+            // Create all-day window
+            const data = {
+                monitorId,
+                startTime: "00:00",
+                endTime: "23:59",
+                timezone,
+                weekdays: [],
+                active: true
+            };
+
+            addOutput(`TEST: Adding 24-hour quiet window (notifications should be SUPPRESSED)`);
+
+            socket.emit('addQuietHours', data, (response) => {
+                if (response.ok) {
+                    addOutput(`✅ Test window added. Try triggering a DOWN event on monitor ${monitorId}`, 'success');
+                    addOutput(`You should see in server logs: "Notification suppressed - inside quiet hours window"`, 'success');
+                } else {
+                    addOutput(`❌ Error: ${response.msg}`, 'error');
+                }
+            });
+        }
+
+        function testOutsideWindow() {
+            const monitorId = parseInt(document.getElementById('monitorId').value);
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+            // Create a 1-minute window that already passed
+            const data = {
+                monitorId,
+                startTime: "00:00",
+                endTime: "00:01",
+                timezone,
+                weekdays: [],
+                active: true
+            };
+
+            addOutput(`TEST: Adding narrow window that excludes current time (notifications should be SENT)`);
+
+            socket.emit('addQuietHours', data, (response) => {
+                if (response.ok) {
+                    addOutput(`✅ Test window added. Try triggering a DOWN event on monitor ${monitorId}`, 'success');
+                    addOutput(`You should receive a normal notification`, 'success');
+                } else {
+                    addOutput(`❌ Error: ${response.msg}`, 'error');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

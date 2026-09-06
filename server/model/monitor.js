@@ -48,6 +48,8 @@ const { Notification } = require("../notification");
 const { Proxy } = require("../proxy");
 const { demoMode } = require("../config");
 const version = require("../../package.json").version;
+const QuietHours = require("./quiet-hours");
+const { isInsideQuietWindow } = require("./quiet-hours");
 const apicache = require("../modules/apicache");
 const { UptimeKumaServer } = require("../uptime-kuma-server");
 const { DockerHost } = require("../docker");
@@ -1451,6 +1453,30 @@ class Monitor extends BeanModel {
      */
     static async sendNotification(isFirstBeat, monitor, bean) {
         if (!isFirstBeat || bean.status === DOWN) {
+            // Check if we're inside a quiet hours window
+            // Only check for Down/Recovery notifications
+            if (monitor.id && (bean.status === DOWN || bean.status === UP)) {
+                try {
+                    const quietHoursWindows = await QuietHours.getQuietHoursForMonitor(monitor.id);
+                    const now = new Date();
+                    
+                    if (isInsideQuietWindow(quietHoursWindows, now)) {
+                        log.info(
+                            "monitor",
+                            `[${monitor.name}] Notification suppressed - inside quiet hours window`
+                        );
+                        return; // Skip notification sending
+                    }
+                } catch (error) {
+                    // If quiet hours check fails, log error but continue with notification
+                    // Better to send notification than to fail silently
+                    log.error(
+                        "monitor",
+                        `[${monitor.name}] Error checking quiet hours: ${error.message}`
+                    );
+                }
+            }
+
             const notificationList = await Monitor.getNotificationList(monitor);
 
             let text;
