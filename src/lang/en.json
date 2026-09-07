@@ -597,6 +597,8 @@
     "ariaCloneMaintenance": "Create a copy of this maintenance schedule",
     "ariaEditMaintenance": "Edit this maintenance schedule",
     "ariaDeleteMaintenance": "Delete this maintenance schedule",
+    "ariaRemoveMonitorFromGroup": "Remove monitor from group",
+    "ariaMonitorSettings": "Monitor settings",
     "ariaResetLogo": "Reset logo to default",
     "ariaClearAllToasts": "Clear all toasts",
     "ariaRemoveMonitorFromTag": "Remove monitor",
