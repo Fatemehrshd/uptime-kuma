@@ -57,6 +57,7 @@
                 <button
                     class="btn btn-outline-danger"
                     type="button"
+                    :title="$t('conditionDeleteGroup')"
                     :aria-label="$t('conditionDeleteGroup')"
                     data-testid="remove-condition-group"
                     @click="remove"

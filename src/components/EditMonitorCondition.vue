@@ -4,6 +4,7 @@
             v-if="!isInGroup || !isFirst || !isLast"
             class="btn btn-outline-danger remove-button"
             type="button"
+            :title="$t('conditionDelete')"
             :aria-label="$t('conditionDelete')"
             data-testid="remove-condition"
             @click="remove"

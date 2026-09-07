@@ -158,6 +158,8 @@
             v-if="numActiveToasts != 0"
             type="button"
             class="btn btn-normal clear-all-toast-btn"
+            :title="$t('ariaClearAllToasts')"
+            :aria-label="$t('ariaClearAllToasts')"
             @click="clearToasts"
         >
             <font-awesome-icon icon="times" />
