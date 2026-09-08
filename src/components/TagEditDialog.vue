@@ -82,6 +82,8 @@
                                     <button
                                         type="button"
                                         class="btn-rm-monitor btn btn-outline-danger ms-2 py-1"
+                                        :title="$t('ariaRemoveMonitorFromTag')"
+                                        :aria-label="$t('ariaRemoveMonitorFromTag')"
                                         @click.stop.prevent="removeMonitor(monitor.id)"
                                     >
                                         <font-awesome-icon class="" icon="times" />

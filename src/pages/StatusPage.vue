@@ -246,6 +246,8 @@
                         v-if="editMode"
                         type="button"
                         class="p-0 bg-transparent border-0 small-reset-btn reset-top-left"
+                        :title="$t('ariaResetLogo')"
+                        :aria-label="$t('ariaResetLogo')"
                         @click.stop="resetToDefaultImage"
                     >
                         <font-awesome-icon icon="times" class="text-danger" />

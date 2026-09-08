@@ -68,6 +68,7 @@
                     <button
                         type="button"
                         class="btn-rm-expiry btn btn-outline-danger ms-2 py-1"
+                        :title="$t('Remove the expiry notification')"
                         :aria-label="$t('Remove the expiry notification')"
                         @click="removeTlsExpiryNotifDay(day)"
                     >

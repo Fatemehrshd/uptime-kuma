@@ -55,21 +55,28 @@
                                                     icon="arrows-alt-v"
                                                     class="action drag me-3"
                                                 />
-                                                <font-awesome-icon
+                                                <button
                                                     v-if="editMode"
-                                                    icon="times"
-                                                    class="action remove me-3"
+                                                    type="button"
+                                                    :title="$t('ariaRemoveMonitorFromGroup')"
+                                                    :aria-label="$t('ariaRemoveMonitorFromGroup')"
+                                                    class="btn btn-sm btn-icon-plain action remove me-3"
                                                     @click="removeMonitor(group.index, monitor.index)"
-                                                />
+                                                >
+                                                    <font-awesome-icon icon="times" />
+                                                </button>
 
-                                                <font-awesome-icon
+                                                <button
                                                     v-if="editMode"
-                                                    icon="cog"
-                                                    class="action me-3 ms-0"
-                                                    :class="{ 'link-active': true, 'btn-link': true }"
+                                                    type="button"
+                                                    :title="$t('ariaMonitorSettings')"
+                                                    :aria-label="$t('ariaMonitorSettings')"
+                                                    class="btn btn-sm btn-icon-plain action me-3 ms-0 link-active"
                                                     data-testid="monitor-settings"
                                                     @click="$refs.monitorSettingDialog.show(group, monitor)"
-                                                />
+                                                >
+                                                    <font-awesome-icon icon="cog" />
+                                                </button>
                                                 <Status
                                                     v-if="showOnlyLastHeartbeat"
                                                     :status="statusOfLastHeartbeat(monitor.element.id)"
@@ -367,6 +374,15 @@ export default {
 
 .no-move {
     transition: transform 0s;
+}
+
+.btn-icon-plain {
+    border: none !important;
+    background: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    line-height: 1;
+    vertical-align: middle;
 }
 
 .drag {

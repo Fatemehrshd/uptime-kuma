@@ -78,6 +78,25 @@ class NotificationProvider {
             relativeReference: false,
             dynamicPartials: false,
         });
+        
+        // Register filter for JSON string escaping
+        // This escapes special characters for use inside JSON string values
+        engine.registerFilter("json_escape", (value) => {
+            if (value === null || value === undefined) {
+                return "";
+            }
+            // JSON.stringify escapes special characters, but also adds quotes
+            // We remove the surrounding quotes to get just the escaped content
+            const stringified = JSON.stringify(String(value));
+            return stringified.slice(1, -1);
+        });
+        
+        // Register filter for full JSON serialization
+        // This converts any value to a complete JSON representation
+        engine.registerFilter("json", (value) => {
+            return JSON.stringify(value);
+        });
+        
         const parsedTpl = engine.parse(template);
 
         // Let's start with dummy values to simplify code

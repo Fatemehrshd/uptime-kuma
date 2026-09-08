@@ -29,6 +29,8 @@
                         type="button"
                         class="btn-rm-tag btn btn-outline-danger ms-2 py-1"
                         :disabled="processing"
+                        :title="$t('ariaDeleteTag')"
+                        :aria-label="$t('ariaDeleteTag')"
                         @click.stop="deleteConfirm(index)"
                     >
                         <font-awesome-icon class="" icon="trash" />

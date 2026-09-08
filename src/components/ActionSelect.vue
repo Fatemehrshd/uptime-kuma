@@ -9,6 +9,7 @@
             type="button"
             class="btn btn-outline-primary"
             :class="{ disabled: actionDisabled }"
+            :title="actionAriaLabel"
             :aria-label="actionAriaLabel"
             @click="action()"
         >
